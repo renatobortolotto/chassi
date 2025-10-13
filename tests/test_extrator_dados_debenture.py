@@ -26,7 +26,6 @@ class TestServer(unittest.TestCase):
         payload = {
             "pdfs_dir": "gs://bucket/in",
             "payload_dir": "gs://bucket/out",
-            "api_url": "http://api:8000/api",
         }
         with self.server.test_request_context(json=payload) as context:
             resource = self.resource_extrator_dados_debenture()

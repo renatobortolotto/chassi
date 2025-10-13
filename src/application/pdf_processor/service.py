@@ -5,15 +5,22 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from src.infrastructure.services import pdf_ocr as ocr
 from src.infrastructure.services import txt_to_api as tta
+import os
+
+# API externa fixa (LLM)
+# Ajuste estes valores conforme o seu ambiente corporativo.
+LLM_API_BASE = os.environ.get("LLM_API_BASE", "http://llm-api:8000/api")
+LLM_API_ENDPOINT = os.environ.get("LLM_API_ENDPOINT", "/extrator_dados_debentures")
 
 
 @dataclass
 class PdfProcessConfig:
     pdfs_dir: str
     payload_dir: str
-    api_url: str
-    endpoint: str = "/extrator_dados_debentures"
+    # API externa é fixa; não é necessário no payload
     auth_header: Optional[str] = None
+    file_names: Optional[List[str]] = None
+    patterns: Optional[List[str]] = None
     dpi: int = 300
     lang: str = "por+eng"
     min_tokens: int = 120
@@ -29,10 +36,12 @@ def process_pdfs(cfg: PdfProcessConfig) -> Tuple[Dict[str, Any], int]:
         return {"error": "'pdfs_dir' deve ser uma URI gs://bucket/prefix"}, 400
     if not (isinstance(cfg.payload_dir, str) and cfg.payload_dir.startswith("gs://")):
         return {"error": "'payload_dir' deve ser uma URI gs://bucket/prefix"}, 400
-    if not (isinstance(cfg.api_url, str) and cfg.api_url):
-        return {"error": "'api_url' é obrigatório (ex.: http://host:8000/api)"}, 400
+    # API é fixa neste serviço; não é necessário validar no payload
 
-    pdfs = ocr.gcs_list_pdfs(cfg.pdfs_dir, recursive=True)
+    if cfg.patterns:
+        pdfs = ocr.find_pdfs_by_patterns(cfg.pdfs_dir, cfg.patterns, recursive=True)
+    else:
+        pdfs = ocr.gcs_list_pdfs(cfg.pdfs_dir, recursive=True, file_names=cfg.file_names)
     if not pdfs:
         return {"message": "Nenhum PDF encontrado no prefixo informado."}, 404
 
@@ -58,8 +67,8 @@ def process_pdfs(cfg: PdfProcessConfig) -> Tuple[Dict[str, Any], int]:
     txt_uri = ocr.gcs_write_text(cfg.pdfs_dir, txt_name, text)
 
     # 4) POST para API externa
-    base = cfg.api_url.rstrip("/")
-    ep = cfg.endpoint if str(cfg.endpoint).startswith("/") else f"/{cfg.endpoint}"
+    base = LLM_API_BASE.rstrip("/")
+    ep = LLM_API_ENDPOINT if str(LLM_API_ENDPOINT).startswith("/") else f"/{LLM_API_ENDPOINT}"
     url = f"{base}{ep}"
     headers = {"Content-Type": "application/json"}
     if cfg.auth_header:

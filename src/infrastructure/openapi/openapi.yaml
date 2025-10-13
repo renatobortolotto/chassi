@@ -110,12 +110,19 @@ paths:
                       payload_dir:
                         type: string
                         description: Prefixo GCS para gravar o payload JSON (gs://bucket/prefix)
-                      api_url:
-                        type: string
-                        description: Base da API externa (ex. http://host:8000/api)
-                      endpoint:
-                        type: string
-                        description: Endpoint POST da API externa (default: /extrator_dados_debentures)
+                      file_names:
+                        type: array
+                        description: Lista opcional de nomes de arquivos PDF a processar (ex.: ["a.pdf", "b.pdf"]). Se omitido, processa todos do prefixo.
+                        items:
+                          type: string
+                      patterns:
+                        type: array
+                        description: Padrões (case/acento-insensitive) a buscar no nome dos PDFs. Ex.: ["escritura", "contrato de distribuicao", "manual"].
+                        items:
+                          type: string
+                      
+                      # A API externa (LLM) é fixa no serviço e não precisa ser informada no payload.
+                      # auth_header é opcional para autenticação na API fixa.
                       auth_header:
                         type: string
                         description: Authorization header opcional (ex. Bearer <token>)
@@ -143,7 +150,7 @@ paths:
                       retries:
                         type: integer
                         default: 3
-                    required: [pdfs_dir, payload_dir, api_url]
+                    required: [pdfs_dir, payload_dir]
         responses:
           '202':
             description: Created

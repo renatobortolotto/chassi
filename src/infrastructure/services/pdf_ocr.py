@@ -7,7 +7,9 @@ from __future__ import annotations
 import os
 import re
 from io import BytesIO
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Tuple, Optional
+from pathlib import Path
+import unicodedata
 
 from PyPDF2 import PdfReader
 
@@ -49,7 +51,7 @@ def gcs_client():  # pragma: no cover - runtime only
     return storage.Client()
 
 
-def gcs_list_pdfs(dir_uri: str, recursive: bool = True) -> List[str]:  # pragma: no cover
+def gcs_list_pdfs(dir_uri: str, recursive: bool = True, file_names: Optional[List[str]] = None) -> List[str]:  # pragma: no cover
     bucket_name, prefix = parse_gcs_uri(dir_uri)
     client = gcs_client()
     bucket = client.bucket(bucket_name)
@@ -62,6 +64,15 @@ def gcs_list_pdfs(dir_uri: str, recursive: bool = True) -> List[str]:  # pragma:
         if not recursive and b.name.count("/") != base_depth:
             continue
         pdfs.append(f"gs://{bucket_name}/{b.name}")
+    if file_names:
+        wanted = set(file_names)
+        before = len(pdfs)
+        pdfs = [p for p in pdfs if os.path.basename(p) in wanted]
+        logger.info(
+            "[pdf_ocr] gcs_list_pdfs filtered by names before=%d after=%d",
+            before,
+            len(pdfs),
+        )
     logger.info("[pdf_ocr] gcs_list_pdfs dir=%s recursive=%s count=%d", dir_uri, recursive, len(pdfs))
     return pdfs
 
@@ -82,6 +93,47 @@ def gcs_write_text(dir_uri: str, filename: str, text: str) -> str:  # pragma: no
     uri = f"gs://{bucket_name}/{out_key}"
     logger.info("[pdf_ocr] gcs_write_text uri=%s size=%d", uri, len(text or ""))
     return uri
+
+
+# ---------------------------------
+# Busca por padrão no nome do PDF
+# ---------------------------------
+def _strip_accents_lower(s: str) -> str:
+    return unicodedata.normalize("NFKD", s).encode("ASCII", "ignore").decode().lower()
+
+
+def find_pdfs_by_patterns(root_dir: str, patterns: List[str], recursive: bool = True) -> List[str]:
+    """Retorna URIs/paths de PDFs cujo nome contém algum dos padrões (case/acento-insensitive).
+
+    - Suporta gs://bucket/prefix (GCS) e diretórios locais.
+    - Em produção usamos GCS; o modo local é útil para testes/scripts.
+    """
+    norm_patterns = [_strip_accents_lower(p or "") for p in patterns or []]
+
+    if is_gcs_uri(root_dir):
+        candidates = gcs_list_pdfs(root_dir, recursive=recursive)
+        hits: List[str] = []
+        for uri in candidates:
+            name_norm = _strip_accents_lower(Path(uri).stem)
+            if any(pat in name_norm for pat in norm_patterns):
+                hits.append(uri)
+        hits.sort(key=lambda x: _strip_accents_lower(Path(x).name))
+        logger.info("[pdf_ocr] patterns filter dir=%s patterns=%s matched=%d", root_dir, patterns, len(hits))
+        return hits
+
+    # Local (apenas para utilidade)
+    base = Path(root_dir)
+    if not base.is_dir():
+        raise FileNotFoundError(f"Pasta não encontrada: {root_dir}")
+    glob_expr = "**/*.pdf" if recursive else "*.pdf"
+    hits_local: List[str] = []
+    for p in base.glob(glob_expr):
+        name_norm = _strip_accents_lower(p.stem)
+        if any(pat in name_norm for pat in norm_patterns):
+            hits_local.append(str(p))
+    hits_local.sort(key=lambda x: _strip_accents_lower(Path(x).name))
+    logger.info("[pdf_ocr] patterns filter local dir=%s patterns=%s matched=%d", root_dir, patterns, len(hits_local))
+    return hits_local
 
 
 def load_pdf_bytes(identifier: str) -> bytes:

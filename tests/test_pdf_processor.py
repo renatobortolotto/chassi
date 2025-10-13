@@ -26,7 +26,6 @@ class TestPdfProcessorResource(unittest.TestCase):
         with self.server.test_request_context(json={
             "pdfs_dir": "gs://bucket/in",
             "payload_dir": "gs://bucket/out",
-            "api_url": "http://api:8000/api",
         }):
             res = self.ResourcePdfProcessor()
             body, status = res.post()
@@ -40,7 +39,6 @@ class TestPdfProcessorResource(unittest.TestCase):
         with self.server.test_request_context(json={
             "pdfs_dir": "not-gs",
             "payload_dir": "gs://bucket/out",
-            "api_url": "http://api:8000/api",
         }):
             res = ResourcePdfProcessor()
             body, status = res.post()
@@ -49,17 +47,9 @@ class TestPdfProcessorResource(unittest.TestCase):
         with self.server.test_request_context(json={
             "pdfs_dir": "gs://bucket/in",
             "payload_dir": "not-gs",
-            "api_url": "http://api:8000/api",
         }):
             res = ResourcePdfProcessor()
             body, status = res.post()
             self.assertEqual(status, 400)
 
-        with self.server.test_request_context(json={
-            "pdfs_dir": "gs://bucket/in",
-            "payload_dir": "gs://bucket/out",
-            "api_url": "",
-        }):
-            res = ResourcePdfProcessor()
-            body, status = res.post()
-            self.assertEqual(status, 400)
+        # não valida mais api_url (API é fixa)

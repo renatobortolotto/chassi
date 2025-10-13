@@ -9,9 +9,9 @@ class ResourcePdfProcessor(Resource):
         cfg = PdfProcessConfig(
             pdfs_dir=data.get("pdfs_dir"),
             payload_dir=data.get("payload_dir"),
-            api_url=data.get("api_url"),
-            endpoint=data.get("endpoint", "/extrator_dados_debentures"),
             auth_header=data.get("auth_header"),
+            file_names=data.get("file_names"),
+            patterns=data.get("patterns"),
             dpi=int(data.get("dpi", 300)),
             lang=str(data.get("lang", "por+eng")),
             min_tokens=int(data.get("min_tokens", 120)),

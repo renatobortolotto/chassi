@@ -12,13 +12,13 @@ class ResourceExtratorDadosDebenture(Resource):
     def post(self):
         arguments = request.get_json(force=True) or {}
         # Se payload contiver campos do pipeline de PDFs, aciona o processamento
-        if all(k in arguments for k in ("pdfs_dir", "payload_dir", "api_url")):
+        if all(k in arguments for k in ("pdfs_dir", "payload_dir")):
             cfg = PdfProcessConfig(
                 pdfs_dir=arguments.get("pdfs_dir"),
                 payload_dir=arguments.get("payload_dir"),
-                api_url=arguments.get("api_url"),
-                endpoint=arguments.get("endpoint", "/extrator_dados_debentures"),
                 auth_header=arguments.get("auth_header"),
+                file_names=arguments.get("file_names"),
+                patterns=arguments.get("patterns"),
                 dpi=int(arguments.get("dpi", 300)),
                 lang=str(arguments.get("lang", "por+eng")),
                 min_tokens=int(arguments.get("min_tokens", 120)),
