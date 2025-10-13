@@ -35,6 +35,9 @@ Opcionalmente, você pode ajustar alguns parâmetros:
 - `dpi` (padrão 300) e `lang` (`por+eng`) – para o OCR
 - `min_tokens`, `repeat_th`, `repeat_pages` – afinam quando o OCR é utilizado
 - `timeout` e `retries` – comportamento de rede ao chamar a API externa
+ - Seleção de arquivos:
+	 - `file_names`: lista de nomes exatos (ex.: ["a.pdf", "b.pdf"]).
+	 - `patterns`: padrões no nome, case/acento-insensitive. Se omitido e `file_names` ausente, o serviço usa defaults ["escritura", "contrato de distribuição", "manual"].
 
 Retorno (exemplo):
 

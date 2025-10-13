@@ -12,6 +12,13 @@ import os
 LLM_API_BASE = os.environ.get("LLM_API_BASE", "http://llm-api:8000/api")
 LLM_API_ENDPOINT = os.environ.get("LLM_API_ENDPOINT", "/extrator_dados_debentures")
 
+# Padrões default (mesma lógica do script CLI)
+PATTERN_DEFAULTS: List[str] = [
+    "escritura",
+    "contrato de distribuição",
+    "manual",
+]
+
 
 @dataclass
 class PdfProcessConfig:
@@ -38,10 +45,13 @@ def process_pdfs(cfg: PdfProcessConfig) -> Tuple[Dict[str, Any], int]:
         return {"error": "'payload_dir' deve ser uma URI gs://bucket/prefix"}, 400
     # API é fixa neste serviço; não é necessário validar no payload
 
-    if cfg.patterns:
-        pdfs = ocr.find_pdfs_by_patterns(cfg.pdfs_dir, cfg.patterns, recursive=True)
-    else:
+    if cfg.file_names:
+        # Quando nomes exatos são fornecidos, respeitamos isso acima de padrões
         pdfs = ocr.gcs_list_pdfs(cfg.pdfs_dir, recursive=True, file_names=cfg.file_names)
+    else:
+        # Se patterns for omitido, usamos os padrões default
+        use_patterns = cfg.patterns if cfg.patterns is not None else PATTERN_DEFAULTS
+        pdfs = ocr.find_pdfs_by_patterns(cfg.pdfs_dir, use_patterns, recursive=True)
     if not pdfs:
         return {"message": "Nenhum PDF encontrado no prefixo informado."}, 404
 

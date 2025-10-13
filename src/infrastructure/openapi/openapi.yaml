@@ -117,7 +117,7 @@ paths:
                           type: string
                       patterns:
                         type: array
-                        description: Padrões (case/acento-insensitive) a buscar no nome dos PDFs. Ex.: ["escritura", "contrato de distribuicao", "manual"].
+                        description: Padrões (case/acento-insensitive) a buscar no nome dos PDFs. Se não informado e file_names ausente, usa defaults ["escritura", "contrato de distribuição", "manual"].
                         items:
                           type: string
                       
