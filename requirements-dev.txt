@@ -1,0 +1,8 @@
+flake8
+setuptools
+wheel  
+pytest
+pdoc
+pytest-cov
+gunicorn
+flask

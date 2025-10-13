@@ -1,0 +1,7 @@
+spec_version: 0.1
+platform: multi
+configmaps:
+  - name: infra-config
+    file: config/infra.yaml
+  - name: security-config
+    file: config/security.yaml

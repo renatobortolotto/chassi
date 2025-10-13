@@ -1,0 +1,260 @@
+openapi: 3.0.1
+info:
+  title: Chassi API
+  description: API for Chassi application
+  version: 1.0.0
+servers:
+  - description: Local server
+    url: http://localhost:8000
+  - description: Local API
+    url: http://localhost:8000/api
+tags:
+  - name: atomic
+    description: Endpoints related to Atomic operations
+  - name: crud
+    description: Endpoints related to CRUD operations
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /health:
+    get:
+        security: 
+          - BearerAuth: []
+        tags:
+          - atomic
+        summary: Health Check
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: string
+  /metrics:
+    get:
+        security: 
+          - BearerAuth: []
+        tags:
+          - atomic
+        summary: Metrics
+        responses:
+          '200':
+            description: OK
+            content:
+              application/json:
+                schema:
+                  type: string
+  /extrator_dados_debenture:
+    get:
+        security: 
+          - BearerAuth: []
+        tags:
+          - crud
+        summary: Get all extrator_dados_debenture
+        responses:
+          '200':
+            description: success
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 200
+          400:
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 400
+    post:
+        security: 
+          - BearerAuth: []
+        tags:
+          - crud
+        summary: Create a new extrator_dados_debenture or trigger PDF processing
+        requestBody:
+          description: dados do usuario OU configuração de processamento de PDFs (gs:// e API)
+          required: true
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      id: 
+                        type: integer
+                        description: Unique identifier
+                      name:
+                        type: string
+                        description: Name of the user
+                    required: [id, name]
+                  - type: object
+                    properties:
+                      pdfs_dir:
+                        type: string
+                        description: Prefixo GCS com os PDFs (gs://bucket/prefix)
+                      payload_dir:
+                        type: string
+                        description: Prefixo GCS para gravar o payload JSON (gs://bucket/prefix)
+                      api_url:
+                        type: string
+                        description: Base da API externa (ex. http://host:8000/api)
+                      endpoint:
+                        type: string
+                        description: Endpoint POST da API externa (default: /extrator_dados_debentures)
+                      auth_header:
+                        type: string
+                        description: Authorization header opcional (ex. Bearer <token>)
+                      dpi:
+                        type: integer
+                        default: 300
+                      lang:
+                        type: string
+                        default: por+eng
+                      min_tokens:
+                        type: integer
+                        default: 120
+                      repeat_th:
+                        type: number
+                        format: float
+                        default: 0.3
+                      repeat_pages:
+                        type: number
+                        format: float
+                        default: 0.6
+                      timeout:
+                        type: number
+                        format: float
+                        default: 60
+                      retries:
+                        type: integer
+                        default: 3
+                    required: [pdfs_dir, payload_dir, api_url]
+        responses:
+          '202':
+            description: Created
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 200
+          '400':
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 400
+    put:
+        security: 
+          - BearerAuth: []
+        tags:
+          - crud
+        summary: Update an existing extrator_dados_debenture
+        parameters:
+          - in: query
+            name: id
+            description: ID of the extrator_dados_debenture to update
+            required: true
+            schema:
+              type: integer
+        requestBody:
+          description: Updated data for the extrator_dados_debenture
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: Name of the user
+                required:
+                  - name
+        responses:
+          '200':
+            description: Updated successfully
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 200
+          '400':
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 400
+    delete:
+        security: 
+          - BearerAuth: []
+        tags:
+          - crud
+        summary: Delete an extrator_dados_debenture
+        parameters:
+          - in: query
+            name: id
+            description: ID of the extrator_dados_debenture to delete
+            required: true
+            schema:
+              type: integer
+        responses:
+          '204':
+            description: Deleted successfully
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 204
+          '400':
+            description: Bad Request
+            content:
+              application/json:
+                schema:
+                  type: string
+                  properties:
+                    sucess:
+                      type: boolean
+                    statusCode:
+                      type: integer
+                      example: 400
