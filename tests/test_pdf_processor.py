@@ -14,7 +14,7 @@ class TestPdfProcessorResource(unittest.TestCase):
     @mock.patch("src.application.pdf_processor.service.tta.post_with_retries")
     @mock.patch("src.application.pdf_processor.service.ocr.gcs_write_text", return_value="gs://bucket/in/concat-abc.txt")
     @mock.patch("src.application.pdf_processor.service.ocr.concat_many_pdfs_to_text", return_value="lorem ipsum")
-    @mock.patch("src.application.pdf_processor.service.ocr.gcs_list_pdfs", return_value=["gs://bucket/in/a.pdf"])    
+    @mock.patch("src.application.pdf_processor.service.ocr.gcs_list_pdfs", return_value=["gs://bucket/in/escritura.pdf"])    
     def test_post_happy_path(self, m_list, m_concat, m_write_txt, m_post, m_write_json):
         class FakeResp:
             status_code = 200
@@ -51,5 +51,3 @@ class TestPdfProcessorResource(unittest.TestCase):
             res = ResourcePdfProcessor()
             body, status = res.post()
             self.assertEqual(status, 400)
-
-        # não valida mais api_url (API é fixa)

@@ -1,15 +1,19 @@
-FROM python:3.9-slim
+# Alpine-based (company standard). If your org provides a custom base, replace with it (e.g., company/python:3.9-alpine3.22)
+FROM python:3.9-alpine
 
 WORKDIR /app
 
-RUN apt-get update \
-	&& DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-		 tesseract-ocr \
-		 tesseract-ocr-por \
-		 tesseract-ocr-eng \
-	   poppler-utils \
-	   libglib2.0-0 libsm6 libxrender1 libxext6 \
-	&& rm -rf /var/lib/apt/lists/*
+# System deps for OCR and PDF rendering on Alpine
+RUN apk add --no-cache \
+	tesseract-ocr \
+	tesseract-ocr-data-por \
+	tesseract-ocr-data-eng \
+	poppler-utils \
+	glib \
+	libsm \
+	libxrender \
+	libxext \
+	libstdc++
 
 COPY config/ config/
 COPY src/ src/
