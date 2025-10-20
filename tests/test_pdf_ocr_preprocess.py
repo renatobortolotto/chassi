@@ -24,13 +24,15 @@ class TestPdfOcrPreprocess(unittest.TestCase):
 
     def test_deskew_with_angles_rotates(self):
         gray = np.zeros((32, 32), dtype=np.uint8)
+        # Make image non-uniform so rotation produces change
+        gray[2:6, 2:6] = 255
         # Force HoughLines to return one line with theta slightly off 90 deg
         lines = np.array([[[0.0, np.deg2rad(92.0)]]], dtype=np.float32)
         with mock.patch.object(self.mod.cv2, 'HoughLines', return_value=lines):
             out = self.mod._deskew(gray)
         self.assertEqual(out.shape, gray.shape)
         # Result should be different due to rotation
-        self.assertFalse(np.array_equal(gray, out))
+        self.assertGreater(int(np.sum(np.abs(out.astype(int) - gray.astype(int)))), 0)
 
     def test_preprocess_basic(self):
         pil = Image.new('L', (64, 64), color=200)
