@@ -8,7 +8,6 @@ class ResourcePdfProcessor(Resource):
         data = request.get_json(force=True) or {}
         cfg = PdfProcessConfig(
             pdfs_dir=data.get("pdfs_dir"),
-            payload_dir=data.get("payload_dir"),
             auth_header=data.get("auth_header"),
             file_names=data.get("file_names"),
             patterns=data.get("patterns"),

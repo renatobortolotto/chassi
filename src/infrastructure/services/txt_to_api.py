@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Tuple
 import re
 
 import requests
+import logging
 
 try:  # optional GCS
     from google.cloud import storage  # type: ignore
@@ -50,15 +51,33 @@ def gcs_write_json(gs_dir: str, filename: str, payload: Dict[str, Any]) -> str: 
 
 
 def post_with_retries(url: str, json_body: Dict[str, Any], headers: Dict[str, str], timeout: float, retries: int):
+    """POST com retries em falhas de rede e em respostas transitórias.
+
+    Re-tenta em: 429, 502, 503, 504. Em outras respostas retorna imediatamente.
+    """
     last_exc = None
+    backoff = 1.0
     for attempt in range(1, retries + 1):
         try:
             resp = requests.post(url, json=json_body, headers=headers, timeout=timeout)
+            # Treat 5xx responses as transient and retryable
+            status = getattr(resp, "status_code", None)
+            text = getattr(resp, "text", "")
+            if status is not None and 500 <= int(status) < 600:
+                logging.warning("[txt_to_api] attempt=%d url=%s status=%s text=%s -- will retry", attempt, url, status, (text or "<empty>")[:500])
+                # Raise an HTTPError to be caught below and retried
+                resp.raise_for_status()
             return resp
         except (requests.ConnectionError, requests.Timeout) as exc:
             last_exc = exc
             if attempt < retries:
-                time.sleep(min(2 ** attempt, 8))
+                time.sleep(min(backoff, 8.0))
+                backoff *= 2
+        except requests.HTTPError as exc:
+            # Raised when resp.raise_for_status() triggered on 5xx
+            last_exc = exc
+            if attempt < retries:
+                time.sleep(min(backoff, 8.0))
     if last_exc:
         raise last_exc
     raise RuntimeError("Falha HTTP desconhecida")

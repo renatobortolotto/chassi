@@ -25,7 +25,6 @@ class TestServer(unittest.TestCase):
         m_process.return_value = ({"message": "Processamento concluído"}, 200)
         payload = {
             "pdfs_dir": "gs://bucket/in",
-            "payload_dir": "gs://bucket/out",
         }
         with self.server.test_request_context(json=payload) as context:
             resource = self.resource_extrator_dados_debenture()

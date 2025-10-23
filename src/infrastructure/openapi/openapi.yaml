@@ -87,7 +87,7 @@ paths:
           - crud
         summary: Create a new extrator_dados_debenture or trigger PDF processing
         requestBody:
-          description: dados do usuario OU configuração de processamento de PDFs (gs:// e API)
+          description: dados do usuario OU configuração de processamento de PDFs (apenas gs://)
           required: true
           content:
             application/json:
@@ -107,9 +107,6 @@ paths:
                       pdfs_dir:
                         type: string
                         description: Prefixo GCS com os PDFs (gs://bucket/prefix)
-                      payload_dir:
-                        type: string
-                        description: Prefixo GCS para gravar o payload JSON (gs://bucket/prefix)
                       file_names:
                         type: array
                         description: Lista opcional de nomes de arquivos PDF a processar (ex.: ["a.pdf", "b.pdf"]). Se omitido, processa todos do prefixo.
@@ -120,12 +117,6 @@ paths:
                         description: Padrões (case/acento-insensitive) a buscar no nome dos PDFs. Se não informado e file_names ausente, usa defaults ["escritura", "contrato de distribuição", "manual"].
                         items:
                           type: string
-                      
-                      # A API externa (LLM) é fixa no serviço e não precisa ser informada no payload.
-                      # auth_header é opcional para autenticação na API fixa.
-                      auth_header:
-                        type: string
-                        description: Authorization header opcional (ex. Bearer <token>)
                       dpi:
                         type: integer
                         default: 300
@@ -150,7 +141,7 @@ paths:
                       retries:
                         type: integer
                         default: 3
-                    required: [pdfs_dir, payload_dir]
+                    required: [pdfs_dir]
         responses:
           '202':
             description: Created
